@@ -1,0 +1,503 @@
+/* ═══════════════════════════════════════════════════════════════
+   styles.css — Sanara's Relyenong Bangus  (v3)
+   ═══════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600;1,700&family=Outfit:wght@200;300;400;500;600&display=swap');
+
+:root {
+  --orange:       #E8610A;
+  --orange-light: #FF8C38;
+  --orange-dark:  #B84A00;
+  --cream:        #FAF7F3;
+  --white:        #FFFFFF;
+  --ink:          #1A1410;
+  --muted:        rgba(26,20,16,0.38);
+
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body:    'Outfit', sans-serif;
+
+  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: auto; }
+
+body {
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: var(--white);
+  overflow-x: hidden;
+}
+
+/* ─── PRELOADER ─────────────────────────────────────────────── */
+#preloader {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--cream);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 32px;
+  transition: opacity 1s var(--ease-out), visibility 1s;
+}
+#preloader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+.loader-wordmark {
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 2.8vw, 1.5rem);
+  font-weight: 600; letter-spacing: 0.08em; color: var(--ink);
+}
+.loader-wordmark span { color: var(--orange); font-style: italic; }
+
+.loader-ring {
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 1.5px solid rgba(0,0,0,0.08);
+  border-top-color: var(--orange);
+  animation: spin 0.85s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loader-track { width: min(160px,44vw); height: 1px; background: rgba(0,0,0,0.08); overflow: hidden; }
+.loader-fill  { height: 100%; width: 0%; background: var(--orange); transition: width 0.18s ease; }
+
+/* ─── SCROLL SPACER ─────────────────────────────────────────── */
+#scroll-spacer { width: 100%; position: relative; z-index: 1; }
+
+/* ─── STICKY STAGE ──────────────────────────────────────────── */
+#stage {
+  position: sticky; top: 0;
+  width: 100vw; height: 100vh;
+  overflow: hidden; background: var(--white);
+}
+
+/* ─── CANVAS ────────────────────────────────────────────────── */
+#frame-canvas {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  display: block;
+  image-rendering: high-quality;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* ─── STAGE FLASH ───────────────────────────────────────────── */
+#stage-flash {
+  position: absolute; inset: 0;
+  background: var(--white); opacity: 0;
+  pointer-events: none; z-index: 4;
+  transition: opacity 0.08s ease;
+}
+#stage-flash.flash { opacity: 0.07; }
+
+/* ─── NAV ───────────────────────────────────────────────────── */
+#navbar {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+  padding: clamp(18px,3vw,30px) clamp(24px,4vw,56px);
+}
+.nav-brand {
+  font-family: var(--font-display);
+  font-size: clamp(0.85rem,1.6vw,1rem);
+  font-weight: 600; color: var(--ink); letter-spacing: 0.05em; line-height: 1.4;
+}
+.nav-brand span { color: var(--orange); font-style: italic; }
+.nav-sub {
+  font-size: clamp(0.5rem,0.9vw,0.58rem); font-weight: 300;
+  letter-spacing: 0.25em; text-transform: uppercase;
+  color: var(--muted); margin-top: 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PAST BEATS AREA — top-right
+   Chips slide in from the right when a beat becomes past,
+   and slide back out when scrolling up (JS removes .visible).
+   ═══════════════════════════════════════════════════════════════ */
+#past-beats-area {
+  position: absolute;
+  top: 20%;
+  right: clamp(24px, 5vw, 72px);
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 18px;
+  pointer-events: none;
+  padding: 14px 16px 14px 20px;
+  border-radius: 12px;
+  /* Only show the backing when at least one chip is visible */
+  transition: opacity 0.4s;
+}
+
+.past-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  position: relative;
+
+  opacity: 0;
+  transform: translateX(28px) scale(0.92);
+  filter: blur(4px);
+  transition:
+    opacity   0.65s var(--ease-out),
+    transform 0.65s var(--ease-out),
+    filter    0.65s var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 0.07s);
+}
+.past-chip.visible {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  filter: blur(0px);
+}
+.past-chip:not(.visible) {
+  transition-delay: 0s;
+  transition-duration: 0.4s;
+}
+
+.chip-eyebrow {
+  font-family: var(--font-body);
+  font-size: clamp(0.42rem, 0.75vw, 0.52rem);
+  font-weight: 600;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--orange);
+  opacity: 1;
+  line-height: 1;
+  text-shadow: 0 1px 6px rgba(255,255,255,0.7), 0 0 12px rgba(255,255,255,0.5);
+}
+
+.chip-text {
+  font-family: var(--font-display);
+  font-size: clamp(1.1rem, 2.1vw, 1.65rem);
+  font-weight: 700;
+  font-style: italic;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  line-height: 1;
+  white-space: nowrap;
+  text-align: right;
+  text-shadow: 0 1px 8px rgba(255,255,255,0.85), 0 0 20px rgba(255,255,255,0.6);
+}
+
+.chip-rule {
+  height: 1.5px;
+  width: 0;
+  background: var(--orange);
+  opacity: 0.6;
+  border-radius: 999px;
+  transition: width 0.5s var(--ease-out) 0.3s;
+  align-self: flex-end;
+}
+.past-chip.visible .chip-rule {
+  width: 32px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ACTIVE BEAT PANEL — bottom-left
+   ═══════════════════════════════════════════════════════════════ */
+#beat-panel {
+  position: absolute;
+  left: clamp(24px, 5vw, 72px);
+  bottom: clamp(52px, 10vh, 100px);
+  z-index: 5;
+  width: clamp(260px, 44vw, 540px);
+  /* min-height set by JS to prevent layout collapse */
+}
+
+/* All layers stack at the same bottom-left anchor */
+.beat-layer {
+  position: absolute;
+  bottom: 0; left: 0; width: 100%;
+  display: flex; flex-direction: column;
+  pointer-events: none;
+
+  opacity: 0;
+  transform: translateY(22px);
+  transition:
+    opacity   0.72s var(--ease-out),
+    transform 0.72s var(--ease-out);
+}
+
+.beat-layer.is-active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Past layers slide upward and fade — they become chips in top-left instead */
+.beat-layer.is-past {
+  opacity: 0;
+  transform: translateY(-18px);
+  transition:
+    opacity   0.5s var(--ease-out),
+    transform 0.5s var(--ease-out);
+}
+
+/* ─── Orange accent rule ────────────────────────────────────── */
+.beat-rule {
+  height: 1.5px; background: var(--orange);
+  border-radius: 999px;
+  width: 0; margin-bottom: 0; opacity: 0;
+  transition: width 0.7s var(--ease-out), margin-bottom 0.5s var(--ease-out), opacity 0.5s;
+}
+.beat-layer.is-active .beat-rule { width: 44px; margin-bottom: 12px; opacity: 1; }
+
+/* ─── Eyebrow ───────────────────────────────────────────────── */
+.beat-eyebrow {
+  font-family: var(--font-body);
+  font-size: clamp(0.5rem,1vw,0.62rem);
+  font-weight: 500; letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--orange); line-height: 1; margin-bottom: 10px;
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path 0.65s var(--ease-out) 0.1s;
+}
+.beat-layer.is-active .beat-eyebrow { clip-path: inset(0 0 0% 0); }
+
+/* ─── Headline with per-line clip reveal ────────────────────── */
+.beat-headline {
+  font-family: var(--font-display);
+  font-size: clamp(2.8rem,7vw,5.8rem);
+  font-weight: 700; line-height: 0.96; letter-spacing: -0.02em;
+  color: var(--white);
+  -webkit-text-stroke: 1.5px var(--ink);
+  paint-order: stroke fill;
+}
+.beat-headline-line {
+  display: block;
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path 0.75s var(--ease-out);
+}
+.beat-headline-line:nth-child(2) { transition-delay: 0.09s; }
+.beat-layer.is-active .beat-headline-line { clip-path: inset(0 0 0% 0); }
+.beat-headline em { font-style: italic; color: var(--orange); -webkit-text-stroke: 1px var(--orange-dark); }
+
+/* ─── Sub copy ──────────────────────────────────────────────── */
+.beat-sub {
+  font-family: var(--font-body);
+  font-size: clamp(0.74rem,1.4vw,0.88rem);
+  font-weight: 300; color: rgba(26,20,16,0.7);
+  letter-spacing: 0.01em; line-height: 1.65;
+  margin-top: 14px; max-width: 360px;
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path 0.65s var(--ease-out) 0.22s;
+}
+.beat-layer.is-active .beat-sub { clip-path: inset(0 0 0% 0); }
+
+/* ─── BEAUTIFUL MODAL ───────────────────────────────────────── */
+#contact-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s var(--ease-out);
+}
+#contact-modal.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(13,10,7,0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  cursor: pointer;
+}
+
+.modal-card {
+  position: relative;
+  z-index: 1;
+  background: var(--cream);
+  border-radius: 20px;
+  padding: clamp(36px, 6vw, 56px) clamp(32px, 5vw, 52px);
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  box-shadow:
+    0 4px 6px rgba(0,0,0,0.04),
+    0 24px 60px rgba(0,0,0,0.18),
+    0 0 0 1px rgba(255,255,255,0.6) inset;
+
+  transform: translateY(24px) scale(0.96);
+  transition: transform 0.5s var(--ease-spring);
+}
+#contact-modal.open .modal-card {
+  transform: translateY(0) scale(1);
+}
+
+.modal-pip {
+  width: 36px; height: 3px;
+  background: var(--orange);
+  border-radius: 999px;
+  margin: 0 auto 24px;
+}
+
+.modal-eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.56rem; font-weight: 500;
+  letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--orange); margin-bottom: 10px;
+}
+
+.modal-headline {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  font-weight: 700; line-height: 1.1;
+  color: var(--ink); margin-bottom: 6px;
+}
+.modal-headline span { font-style: italic; color: var(--orange); }
+
+.modal-body {
+  font-family: var(--font-body);
+  font-size: 0.8rem; font-weight: 300;
+  color: var(--muted); line-height: 1.7;
+  margin-bottom: 28px;
+}
+
+.modal-contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.modal-contact-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 16px 24px;
+  border-radius: 12px;
+  text-decoration: none;
+  background: var(--white);
+  border: 1px solid rgba(232,97,10,0.15);
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+}
+.modal-contact-btn:hover {
+  background: rgba(232,97,10,0.04);
+  border-color: rgba(232,97,10,0.35);
+  transform: translateY(-2px);
+}
+.modal-contact-btn .btn-label {
+  font-family: var(--font-body);
+  font-size: 0.5rem; font-weight: 500;
+  letter-spacing: 0.24em; text-transform: uppercase;
+  color: var(--muted);
+}
+.modal-contact-btn .btn-value {
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 2.4vw, 1.25rem);
+  font-weight: 700; font-style: italic;
+  color: var(--orange); letter-spacing: 0.01em;
+}
+
+.modal-close {
+  font-family: var(--font-body);
+  font-size: 0.58rem; font-weight: 500;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(26,20,16,0.3);
+  background: none; border: none;
+  cursor: pointer; padding: 8px 16px;
+  transition: color 0.2s;
+}
+.modal-close:hover { color: var(--ink); }
+#progress-bar {
+  position: absolute; bottom: 0; left: 0;
+  height: 1.5px; width: 0%;
+  background: var(--orange); z-index: 10;
+}
+
+/* ─── SCROLL HINT ───────────────────────────────────────────── */
+#scroll-hint {
+  position: absolute;
+  bottom: clamp(22px,4vh,40px); right: clamp(24px,4vw,56px);
+  z-index: 10;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  opacity: 1; transition: opacity 0.6s var(--ease-out);
+}
+#scroll-hint.hidden { opacity: 0; pointer-events: none; }
+.hint-label { font-size: 0.52rem; font-weight: 500; letter-spacing: 0.24em; text-transform: uppercase; color: rgba(0,0,0,0.3); }
+.hint-mouse { width: 17px; height: 28px; border: 1px solid rgba(0,0,0,0.2); border-radius: 8px; display: flex; justify-content: center; padding-top: 5px; }
+.hint-wheel { width: 1.5px; height: 5px; background: rgba(0,0,0,0.25); border-radius: 999px; animation: wheel 2s ease infinite; }
+@keyframes wheel {
+  0%   { transform: translateY(0);   opacity: 1; }
+  70%  { transform: translateY(6px); opacity: 0; }
+  100% { transform: translateY(0);   opacity: 0; }
+}
+
+/* ─── STICKY CTA ────────────────────────────────────────────── */
+#cta-btn {
+  position: fixed;
+  bottom: clamp(20px,4vh,36px); right: clamp(20px,4vw,44px);
+  z-index: 20;
+  background: var(--orange); color: var(--white);
+  font-family: var(--font-body);
+  font-size: clamp(0.6rem,1.2vw,0.72rem);
+  font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
+  border: none; border-radius: 999px;
+  padding: clamp(11px,1.8vh,15px) clamp(24px,3vw,34px);
+  cursor: pointer;
+  box-shadow: 0 6px 28px rgba(232,97,10,0.35);
+  opacity: 0; transform: translateY(10px);
+  transition: opacity 0.6s var(--ease-out), transform 0.6s var(--ease-out), background 0.2s, box-shadow 0.2s;
+  white-space: nowrap;
+}
+#cta-btn.visible { opacity: 1; transform: translateY(0); }
+#cta-btn:hover   { background: var(--orange-light); box-shadow: 0 8px 36px rgba(232,97,10,0.5); transform: translateY(-2px); }
+#cta-btn:active  { transform: scale(0.96) translateY(0); }
+
+/* ─── OUTRO ─────────────────────────────────────────────────── */
+#outro {
+  position: relative; z-index: 1;
+  background: var(--cream); color: var(--ink); text-align: center;
+  padding: clamp(88px,13vw,140px) clamp(24px,6vw,80px) clamp(80px,11vw,120px);
+  display: flex; flex-direction: column; align-items: center; gap: 22px;
+}
+.outro-rule-top { width: 1px; height: 56px; background: linear-gradient(to bottom,transparent,var(--orange)); opacity: 0.5; }
+.outro-eyebrow  { font-family: var(--font-body); font-size: 0.66rem; font-weight: 500; letter-spacing: 0.28em; text-transform: uppercase; color: var(--orange); }
+.outro-headline { font-family: var(--font-display); font-size: clamp(2.4rem,5.5vw,4.2rem); font-weight: 700; line-height: 1.06; color: var(--ink); }
+.outro-headline span { color: var(--orange); font-style: italic; }
+.outro-body { font-family: var(--font-body); font-size: clamp(0.82rem,1.6vw,0.95rem); font-weight: 300; color: rgba(26,20,16,0.5); max-width: 420px; line-height: 1.75; }
+.outro-feats { display: flex; gap: clamp(20px,4vw,48px); flex-wrap: wrap; justify-content: center; margin-top: 4px; }
+.outro-feat { font-family: var(--font-body); font-size: 0.72rem; color: rgba(26,20,16,0.42); letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px; }
+.feat-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--orange); flex-shrink: 0; }
+/* Contact block */
+.outro-contact {
+  margin-top: 10px;
+}
+.outro-contact-trigger {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 0.2s;
+}
+.outro-contact-trigger:hover { opacity: 0.7; }
+.contact-label {
+  font-family: var(--font-body);
+  font-size: 0.56rem; font-weight: 500;
+  letter-spacing: 0.24em; text-transform: uppercase;
+  color: var(--muted);
+}
+.contact-value {
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 2.8vw, 1.7rem);
+  font-weight: 700; font-style: italic;
+  color: var(--orange);
+  letter-spacing: 0.01em; line-height: 1;
+}
+.footer-note { font-size: 0.58rem; color: rgba(26,20,16,0.18); letter-spacing: 0.08em; margin-top: 32px; }
+
+/* ─── RESPONSIVE ────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  #beat-panel      { left: 18px; right: 18px; bottom: 50px; width: auto; max-width: none; }
+  #past-beats-area { right: 16px; top: 18%; }
+  .chip-text { white-space: normal; text-align: right; max-width: 140px; }
+  .beat-headline   { font-size: clamp(2rem,11vw,3rem); }
+}
