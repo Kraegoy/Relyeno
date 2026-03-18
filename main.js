@@ -13,10 +13,11 @@
   'use strict';
 
   /* ─── CONFIG ────────────────────────────────────────────────── */
-  const TOTAL_FRAMES = 151;
-  const PX_PER_FRAME = 36;
-  const LERP_FACTOR  = 0.12;
-  const FRAME_DIR    = 'relyeno frames';
+  const TOTAL_FRAMES    = 151;
+  const PX_PER_FRAME    = 36;
+  const VIDEO_DURATION  = 5;                               // seconds this video represents
+  const MAX_FRAMES_SEC  = TOTAL_FRAMES / VIDEO_DURATION;   // ≈30.2 — max frames we advance per second
+  const FRAME_DIR       = 'relyeno frames';
   const FRAME_PREFIX = 'ezgif-frame-';
   const FRAME_EXT    = '.jpg';
   const NATIVE_W     = 3840;
@@ -251,11 +252,36 @@
   }
 
   /* ─── RAF LOOP ──────────────────────────────────────────────── */
-  function tick() {
-    const delta = targetFrame - currentFrame;
-    currentFrame = Math.abs(delta) > 0.05
-      ? currentFrame + delta * LERP_FACTOR
-      : targetFrame;
+  /*
+   * Time-based frame advancement.
+   *
+   * Instead of lerping by a fixed fraction each tick (which means a fast
+   * scroll jumps many frames at once), we cap how many frames can advance
+   * per real-world millisecond — equivalent to the video's natural playback
+   * rate (VIDEO_DURATION seconds for TOTAL_FRAMES frames).
+   *
+   * Fast scroll  → targetFrame jumps far ahead, but currentFrame still
+   *                advances at most MAX_FRAMES_SEC frames per second.
+   * Slow scroll  → target stays close, currentFrame catches up instantly.
+   * Scroll stop  → currentFrame finishes arriving at targetFrame at the
+   *                same capped rate, giving a natural coast-to-stop feel.
+   */
+  let lastTs = null;
+
+  function tick(ts) {
+    if (lastTs === null) lastTs = ts;
+    const dt      = Math.min((ts - lastTs) / 1000, 0.1); // seconds, capped at 100 ms
+    lastTs        = ts;
+
+    const diff    = targetFrame - currentFrame;
+    const maxStep = MAX_FRAMES_SEC * dt;
+
+    if (Math.abs(diff) <= 0.5) {
+      currentFrame = targetFrame;
+    } else {
+      // Advance toward target, but no faster than natural playback speed
+      currentFrame += Math.sign(diff) * Math.min(Math.abs(diff), maxStep);
+    }
 
     const idx = Math.min(Math.round(currentFrame), TOTAL_FRAMES - 1);
     drawFrame(idx);
@@ -292,7 +318,7 @@
 
     requestAnimationFrame(() => updatePanelHeight());
 
-    tick();
+    requestAnimationFrame(tick);
 
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', () => {
