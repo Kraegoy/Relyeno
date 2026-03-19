@@ -13,7 +13,7 @@
   'use strict';
 
   /* ─── CONFIG ────────────────────────────────────────────────── */
-  const TOTAL_FRAMES = 151;
+  const TOTAL_FRAMES = 220;
   const PX_PER_FRAME = 36;
   const LERP_FACTOR  = 0.12;
   const FRAME_DIR    = 'relyeno frames';
@@ -25,28 +25,28 @@
 
   const BEATS = [
     {
-      start: 1,   end: 30,
+      start: 1,   end: 55,
       eyebrow:  'Straight from the kitchen',
       headline: ['Pure veggies', 'and <em>bangus</em>'],
       sub:      'Crafted with love — packed with fresh vegetables and premium milkfish.',
       chipLabel: 'Pure veggies and bangus',
     },
     {
-      start: 32,  end: 65,
+      start: 57,  end: 110,
       eyebrow:  'The original. The best.',
       headline: ['Your number 1', '<em>relyeno</em>'],
       sub:      'Nothing else compares to the taste you grew up loving.',
       chipLabel: 'Your number 1 relyeno',
     },
     {
-      start: 67,  end: 95,
+      start: 112,  end: 165,
       eyebrow:  'Every single bite',
       headline: ['Taste the', '<em>difference</em>'],
       sub:      'Every ingredient chosen with care. Every bite tells the story of tradition.',
       chipLabel: 'Taste the difference',
     },
     {
-      start: 97,  end: 151,
+      start: 167,  end: 220,
       eyebrow:  'Ready to order?',
       headline: ['Order now', 'at <em>Sanara\'s</em>'],
       sub:      'Relyenong Bangus — freshly made, always delicious.',
