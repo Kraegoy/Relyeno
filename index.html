@@ -21,14 +21,14 @@
     </div>
   </div>
 
-  <!-- SCROLL SPACER — height set by JS -->
+  <!-- SCROLL SPACER — height set by JS (frames + outro budget) -->
   <div id="scroll-spacer">
     <div id="stage">
 
-      <!-- Canvas: contain-fitted, HiDPI-aware -->
+      <!-- Canvas -->
       <canvas id="frame-canvas"></canvas>
 
-      <!-- Subtle beat-change flash overlay -->
+      <!-- Beat-change flash overlay -->
       <div id="stage-flash"></div>
 
       <!-- Scroll progress line -->
@@ -42,19 +42,36 @@
         </div>
       </nav>
 
-      <!--
-        PAST BEATS AREA — top-left
-        Chips injected by JS. Each chip gains .visible when its
-        beat becomes past, loses .visible on scroll back up.
-      -->
+      <!-- PAST BEATS — top-right chips -->
       <div id="past-beats-area"></div>
 
-      <!--
-        ACTIVE BEAT PANEL — bottom-left
-        All .beat-layer elements injected by JS, stacked absolutely.
-        Only .is-active is visible at any time.
-      -->
+      <!-- ACTIVE BEAT PANEL — bottom-left -->
       <div id="beat-panel"></div>
+
+      <!-- OUTRO PANEL — slides up from bottom over frozen last frame -->
+      <div id="outro-panel">
+        <div class="outro-inner">
+          <div class="outro-rule-top"></div>
+          <div class="outro-eyebrow">The finest relyeno in town</div>
+          <div class="outro-headline">Sanara's<br><span>Relyenong Bangus</span></div>
+          <div class="outro-body">
+            Serving authentic Filipino flavors with fresh, locally sourced ingredients —
+            prepared daily with passion and care.
+          </div>
+          <div class="outro-feats">
+            <div class="outro-feat"><div class="feat-dot"></div>Freshly prepared every day</div>
+            <div class="outro-feat"><div class="feat-dot"></div>100% locally sourced</div>
+            <div class="outro-feat"><div class="feat-dot"></div>Premium bangus</div>
+          </div>
+          <div class="outro-contact">
+            <button class="outro-contact-trigger" onclick="openModal()">
+              <span class="contact-label">Ready to order?</span>
+              <span class="contact-value">Get in touch</span>
+            </button>
+          </div>
+          <div class="footer-note">© 2025 Sanara's Relyenong Bangus. All rights reserved.</div>
+        </div>
+      </div>
 
       <!-- Scroll hint -->
       <div id="scroll-hint">
@@ -64,29 +81,6 @@
 
     </div>
   </div>
-
-  <!-- OUTRO -->
-  <section id="outro">
-    <div class="outro-rule-top"></div>
-    <div class="outro-eyebrow">The finest relyeno in town</div>
-    <div class="outro-headline">Sanara's<br><span>Relyenong Bangus</span></div>
-    <div class="outro-body">
-      Serving authentic Filipino flavors with fresh, locally sourced ingredients —
-      prepared daily with passion and care.
-    </div>
-    <div class="outro-feats">
-      <div class="outro-feat"><div class="feat-dot"></div>Freshly prepared every day</div>
-      <div class="outro-feat"><div class="feat-dot"></div>100% locally sourced</div>
-      <div class="outro-feat"><div class="feat-dot"></div>Premium bangus</div>
-    </div>
-    <div class="outro-contact">
-      <button class="outro-contact-trigger" onclick="openModal()">
-        <span class="contact-label">Ready to order?</span>
-        <span class="contact-value">Get in touch</span>
-      </button>
-    </div>
-    <div class="footer-note">© 2025 Sanara's Relyenong Bangus. All rights reserved.</div>
-  </section>
 
   <!-- CONTACT MODAL -->
   <div id="contact-modal" role="dialog" aria-modal="true">

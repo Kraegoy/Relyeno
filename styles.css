@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   styles.css — Sanara's Relyenong Bangus  (v3)
+   styles.css — Sanara's Relyenong Bangus  (v5)
    ═══════════════════════════════════════════════════════════════ */
 
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600;1,700&family=Outfit:wght@200;300;400;500;600&display=swap');
@@ -62,10 +62,11 @@ body {
 #scroll-spacer { width: 100%; position: relative; z-index: 1; }
 
 /* ─── STICKY STAGE ──────────────────────────────────────────── */
+/* change white to cream so canvas fade looks good */
 #stage {
   position: sticky; top: 0;
   width: 100vw; height: 100vh;
-  overflow: hidden; background: var(--white);
+  overflow: hidden; background: var(--cream);
 }
 
 /* ─── CANVAS ────────────────────────────────────────────────── */
@@ -75,6 +76,8 @@ body {
   display: block;
   image-rendering: high-quality;
   image-rendering: -webkit-optimize-contrast;
+  transform-origin: center center;
+  transition: transform 0.05s linear, opacity 0.05s linear;
 }
 
 /* ─── STAGE FLASH ───────────────────────────────────────────── */
@@ -105,8 +108,6 @@ body {
 
 /* ═══════════════════════════════════════════════════════════════
    PAST BEATS AREA — top-right
-   Chips slide in from the right when a beat becomes past,
-   and slide back out when scrolling up (JS removes .visible).
    ═══════════════════════════════════════════════════════════════ */
 #past-beats-area {
   position: absolute;
@@ -120,7 +121,6 @@ body {
   pointer-events: none;
   padding: 14px 16px 14px 20px;
   border-radius: 12px;
-  /* Only show the backing when at least one chip is visible */
   transition: opacity 0.4s;
 }
 
@@ -130,7 +130,6 @@ body {
   align-items: flex-end;
   gap: 4px;
   position: relative;
-
   opacity: 0;
   transform: translateX(28px) scale(0.92);
   filter: blur(4px);
@@ -157,7 +156,6 @@ body {
   letter-spacing: 0.26em;
   text-transform: uppercase;
   color: var(--orange);
-  opacity: 1;
   line-height: 1;
   text-shadow: 0 1px 6px rgba(255,255,255,0.7), 0 0 12px rgba(255,255,255,0.5);
 }
@@ -184,9 +182,7 @@ body {
   transition: width 0.5s var(--ease-out) 0.3s;
   align-self: flex-end;
 }
-.past-chip.visible .chip-rule {
-  width: 32px;
-}
+.past-chip.visible .chip-rule { width: 32px; }
 
 /* ═══════════════════════════════════════════════════════════════
    ACTIVE BEAT PANEL — bottom-left
@@ -197,16 +193,14 @@ body {
   bottom: clamp(52px, 10vh, 100px);
   z-index: 5;
   width: clamp(260px, 44vw, 540px);
-  /* min-height set by JS to prevent layout collapse */
+  transition: opacity 0.3s ease;
 }
 
-/* All layers stack at the same bottom-left anchor */
 .beat-layer {
   position: absolute;
   bottom: 0; left: 0; width: 100%;
   display: flex; flex-direction: column;
   pointer-events: none;
-
   opacity: 0;
   transform: translateY(22px);
   transition:
@@ -220,7 +214,6 @@ body {
   pointer-events: auto;
 }
 
-/* Past layers slide upward and fade — they become chips in top-left instead */
 .beat-layer.is-past {
   opacity: 0;
   transform: translateY(-18px);
@@ -229,7 +222,6 @@ body {
     transform 0.5s var(--ease-out);
 }
 
-/* ─── Orange accent rule ────────────────────────────────────── */
 .beat-rule {
   height: 1.5px; background: var(--orange);
   border-radius: 999px;
@@ -238,7 +230,6 @@ body {
 }
 .beat-layer.is-active .beat-rule { width: 44px; margin-bottom: 12px; opacity: 1; }
 
-/* ─── Eyebrow ───────────────────────────────────────────────── */
 .beat-eyebrow {
   font-family: var(--font-body);
   font-size: clamp(0.5rem,1vw,0.62rem);
@@ -249,7 +240,6 @@ body {
 }
 .beat-layer.is-active .beat-eyebrow { clip-path: inset(0 0 0% 0); }
 
-/* ─── Headline with per-line clip reveal ────────────────────── */
 .beat-headline {
   font-family: var(--font-display);
   font-size: clamp(2.8rem,7vw,5.8rem);
@@ -267,7 +257,6 @@ body {
 .beat-layer.is-active .beat-headline-line { clip-path: inset(0 0 0% 0); }
 .beat-headline em { font-style: italic; color: var(--orange); -webkit-text-stroke: 1px var(--orange-dark); }
 
-/* ─── Sub copy ──────────────────────────────────────────────── */
 .beat-sub {
   font-family: var(--font-body);
   font-size: clamp(0.74rem,1.4vw,0.88rem);
@@ -279,130 +268,123 @@ body {
 }
 .beat-layer.is-active .beat-sub { clip-path: inset(0 0 0% 0); }
 
-/* ─── BEAUTIFUL MODAL ───────────────────────────────────────── */
-#contact-modal {
-  position: fixed;
+/* ═══════════════════════════════════════════════════════════════
+   OUTRO PANEL — lives inside #stage, slides up from bottom
+   Video stays frozen behind it as the background
+   ═══════════════════════════════════════════════════════════════ */
+#outro-panel {
+  position: absolute;
   inset: 0;
-  z-index: 9998;
+  z-index: 6;
+  pointer-events: none;
+  transform: translateY(100vh);
+  opacity: 0;
+  background: transparent; /* remove the dark rgba */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.4s var(--ease-out);
+  overflow: hidden;
 }
-#contact-modal.open {
-  opacity: 1;
+
+#outro-panel.is-visible {
   pointer-events: auto;
 }
 
-.modal-backdrop {
+/* Gradient at the top edge for a smooth slide-in feel */
+#outro-panel::before {
+  content: '';
   position: absolute;
-  inset: 0;
-  background: rgba(13,10,7,0.55);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  cursor: pointer;
+  top: 0; left: 0; right: 0;
+  height: 120px;
+  pointer-events: none;
 }
 
-.modal-card {
-  position: relative;
-  z-index: 1;
-  background: var(--cream);
-  border-radius: 20px;
-  padding: clamp(36px, 6vw, 56px) clamp(32px, 5vw, 52px);
-  max-width: 420px;
-  width: 100%;
-  text-align: center;
-  box-shadow:
-    0 4px 6px rgba(0,0,0,0.04),
-    0 24px 60px rgba(0,0,0,0.18),
-    0 0 0 1px rgba(255,255,255,0.6) inset;
-
-  transform: translateY(24px) scale(0.96);
-  transition: transform 0.5s var(--ease-spring);
-}
-#contact-modal.open .modal-card {
-  transform: translateY(0) scale(1);
-}
-
-.modal-pip {
-  width: 36px; height: 3px;
-  background: var(--orange);
-  border-radius: 999px;
-  margin: 0 auto 24px;
-}
-
-.modal-eyebrow {
-  font-family: var(--font-body);
-  font-size: 0.56rem; font-weight: 500;
-  letter-spacing: 0.28em; text-transform: uppercase;
-  color: var(--orange); margin-bottom: 10px;
-}
-
-.modal-headline {
-  font-family: var(--font-display);
-  font-size: clamp(1.6rem, 4vw, 2.2rem);
-  font-weight: 700; line-height: 1.1;
-  color: var(--ink); margin-bottom: 6px;
-}
-.modal-headline span { font-style: italic; color: var(--orange); }
-
-.modal-body {
-  font-family: var(--font-body);
-  font-size: 0.8rem; font-weight: 300;
-  color: var(--muted); line-height: 1.7;
-  margin-bottom: 28px;
-}
-
-.modal-contacts {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 28px;
-}
-
-.modal-contact-btn {
+.outro-inner {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 16px 24px;
-  border-radius: 12px;
-  text-decoration: none;
-  background: var(--white);
-  border: 1px solid rgba(232,97,10,0.15);
-  transition: background 0.2s, border-color 0.2s, transform 0.2s;
-}
-.modal-contact-btn:hover {
-  background: rgba(232,97,10,0.04);
-  border-color: rgba(232,97,10,0.35);
-  transform: translateY(-2px);
-}
-.modal-contact-btn .btn-label {
-  font-family: var(--font-body);
-  font-size: 0.5rem; font-weight: 500;
-  letter-spacing: 0.24em; text-transform: uppercase;
-  color: var(--muted);
-}
-.modal-contact-btn .btn-value {
-  font-family: var(--font-display);
-  font-size: clamp(1rem, 2.4vw, 1.25rem);
-  font-weight: 700; font-style: italic;
-  color: var(--orange); letter-spacing: 0.01em;
+  gap: 20px;
+  text-align: center;
+  padding: clamp(40px,8vw,80px) clamp(24px,6vw,80px);
+  max-width: 680px;
+  width: 100%;
+  position: relative;
+  z-index: 1;
 }
 
-.modal-close {
-  font-family: var(--font-body);
-  font-size: 0.58rem; font-weight: 500;
-  letter-spacing: 0.18em; text-transform: uppercase;
-  color: rgba(26,20,16,0.3);
-  background: none; border: none;
-  cursor: pointer; padding: 8px 16px;
-  transition: color 0.2s;
+.outro-rule-top {
+  width: 1px; height: 48px;
+  background: linear-gradient(to bottom, transparent, var(--orange));
+  opacity: 0.7;
 }
-.modal-close:hover { color: var(--ink); }
+
+.outro-eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.66rem; font-weight: 500;
+  letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--orange);
+}
+
+.outro-headline {
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem,5.5vw,4.2rem);
+  font-weight: 700; line-height: 1.06;
+  color: var(--ink);
+}
+
+.outro-headline span {
+  color: var(--orange);
+  font-style: italic;
+}
+
+.outro-body {
+  font-family: var(--font-body);
+  font-size: clamp(0.82rem,1.6vw,0.95rem); font-weight: 300;
+  color: rgba(26,20,16,0.65);
+  max-width: 420px; line-height: 1.75;
+}
+
+.outro-feats {
+  display: flex; gap: clamp(20px,4vw,48px);
+  flex-wrap: wrap; justify-content: center;
+}
+.outro-feat {
+  font-family: var(--font-body); font-size: 0.72rem;
+  color: rgba(26,20,16,0.45);
+  letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px;
+}
+
+.feat-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--orange); flex-shrink: 0; }
+
+.outro-contact { margin-top: 4px; }
+.outro-contact-trigger {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  background: none; border: none; cursor: pointer; padding: 0;
+  transition: opacity 0.2s;
+}
+.outro-contact-trigger:hover { opacity: 0.7; }
+
+.contact-label {
+  font-family: var(--font-body); font-size: 0.56rem; font-weight: 500;
+  letter-spacing: 0.24em; text-transform: uppercase;
+  color: rgba(26,20,16,0.4);
+}
+.contact-value {
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 2.8vw, 1.7rem);
+  font-weight: 700; font-style: italic;
+  color: var(--orange); letter-spacing: 0.01em; line-height: 1;
+}
+
+.footer-note {
+  font-size: 0.58rem; color: rgba(26,20,16,0.25);
+  letter-spacing: 0.08em; margin-top: 8px;
+}
+
+
+/* ─── PROGRESS BAR ──────────────────────────────────────────── */
 #progress-bar {
   position: absolute; bottom: 0; left: 0;
   height: 1.5px; width: 0%;
@@ -448,56 +430,59 @@ body {
 #cta-btn:hover   { background: var(--orange-light); box-shadow: 0 8px 36px rgba(232,97,10,0.5); transform: translateY(-2px); }
 #cta-btn:active  { transform: scale(0.96) translateY(0); }
 
-/* ─── OUTRO ─────────────────────────────────────────────────── */
-#outro {
-  position: relative; z-index: 1;
-  background: var(--cream); color: var(--ink); text-align: center;
-  padding: clamp(88px,13vw,140px) clamp(24px,6vw,80px) clamp(80px,11vw,120px);
-  display: flex; flex-direction: column; align-items: center; gap: 22px;
+/* ─── MODAL ─────────────────────────────────────────────────── */
+#contact-modal {
+  position: fixed; inset: 0; z-index: 9998;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px; pointer-events: none;
+  opacity: 0; transition: opacity 0.4s var(--ease-out);
 }
-.outro-rule-top { width: 1px; height: 56px; background: linear-gradient(to bottom,transparent,var(--orange)); opacity: 0.5; }
-.outro-eyebrow  { font-family: var(--font-body); font-size: 0.66rem; font-weight: 500; letter-spacing: 0.28em; text-transform: uppercase; color: var(--orange); }
-.outro-headline { font-family: var(--font-display); font-size: clamp(2.4rem,5.5vw,4.2rem); font-weight: 700; line-height: 1.06; color: var(--ink); }
-.outro-headline span { color: var(--orange); font-style: italic; }
-.outro-body { font-family: var(--font-body); font-size: clamp(0.82rem,1.6vw,0.95rem); font-weight: 300; color: rgba(26,20,16,0.5); max-width: 420px; line-height: 1.75; }
-.outro-feats { display: flex; gap: clamp(20px,4vw,48px); flex-wrap: wrap; justify-content: center; margin-top: 4px; }
-.outro-feat { font-family: var(--font-body); font-size: 0.72rem; color: rgba(26,20,16,0.42); letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px; }
-.feat-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--orange); flex-shrink: 0; }
-/* Contact block */
-.outro-contact {
-  margin-top: 10px;
-}
-.outro-contact-trigger {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  background: none;
-  border: none;
+#contact-modal.open { opacity: 1; pointer-events: auto; }
+
+.modal-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(13,10,7,0.55);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   cursor: pointer;
-  padding: 0;
-  transition: opacity 0.2s;
 }
-.outro-contact-trigger:hover { opacity: 0.7; }
-.contact-label {
-  font-family: var(--font-body);
-  font-size: 0.56rem; font-weight: 500;
-  letter-spacing: 0.24em; text-transform: uppercase;
-  color: var(--muted);
+
+.modal-card {
+  position: relative; z-index: 1;
+  background: var(--cream); border-radius: 20px;
+  padding: clamp(36px,6vw,56px) clamp(32px,5vw,52px);
+  max-width: 420px; width: 100%; text-align: center;
+  box-shadow:
+    0 4px 6px rgba(0,0,0,0.04),
+    0 24px 60px rgba(0,0,0,0.18),
+    0 0 0 1px rgba(255,255,255,0.6) inset;
+  transform: translateY(24px) scale(0.96);
+  transition: transform 0.5s var(--ease-spring);
 }
-.contact-value {
-  font-family: var(--font-display);
-  font-size: clamp(1.2rem, 2.8vw, 1.7rem);
-  font-weight: 700; font-style: italic;
-  color: var(--orange);
-  letter-spacing: 0.01em; line-height: 1;
+#contact-modal.open .modal-card { transform: translateY(0) scale(1); }
+
+.modal-pip { width: 36px; height: 3px; background: var(--orange); border-radius: 999px; margin: 0 auto 24px; }
+.modal-eyebrow { font-family: var(--font-body); font-size: 0.56rem; font-weight: 500; letter-spacing: 0.28em; text-transform: uppercase; color: var(--orange); margin-bottom: 10px; }
+.modal-headline { font-family: var(--font-display); font-size: clamp(1.6rem,4vw,2.2rem); font-weight: 700; line-height: 1.1; color: var(--ink); margin-bottom: 6px; }
+.modal-headline span { font-style: italic; color: var(--orange); }
+.modal-body { font-family: var(--font-body); font-size: 0.8rem; font-weight: 300; color: var(--muted); line-height: 1.7; margin-bottom: 28px; }
+.modal-contacts { display: flex; flex-direction: column; gap: 12px; margin-bottom: 28px; }
+.modal-contact-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 16px 24px; border-radius: 12px; text-decoration: none;
+  background: var(--white); border: 1px solid rgba(232,97,10,0.15);
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
 }
-.footer-note { font-size: 0.58rem; color: rgba(26,20,16,0.18); letter-spacing: 0.08em; margin-top: 32px; }
+.modal-contact-btn:hover { background: rgba(232,97,10,0.04); border-color: rgba(232,97,10,0.35); transform: translateY(-2px); }
+.modal-contact-btn .btn-label { font-family: var(--font-body); font-size: 0.5rem; font-weight: 500; letter-spacing: 0.24em; text-transform: uppercase; color: var(--muted); }
+.modal-contact-btn .btn-value { font-family: var(--font-display); font-size: clamp(1rem,2.4vw,1.25rem); font-weight: 700; font-style: italic; color: var(--orange); letter-spacing: 0.01em; }
+.modal-close { font-family: var(--font-body); font-size: 0.58rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(26,20,16,0.3); background: none; border: none; cursor: pointer; padding: 8px 16px; transition: color 0.2s; }
+.modal-close:hover { color: var(--ink); }
 
 /* ─── RESPONSIVE ────────────────────────────────────────────── */
 @media (max-width: 600px) {
   #beat-panel      { left: 18px; right: 18px; bottom: 50px; width: auto; max-width: none; }
   #past-beats-area { right: 16px; top: 18%; }
-  .chip-text { white-space: normal; text-align: right; max-width: 140px; }
+  .chip-text       { white-space: normal; text-align: right; max-width: 140px; }
   .beat-headline   { font-size: clamp(2rem,11vw,3rem); }
+  .outro-inner     { padding: 40px 20px; }
 }

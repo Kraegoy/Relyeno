@@ -1,27 +1,31 @@
 /**
- * main.js — Sanara's Relyenong Bangus (v3)
+ * main.js — Sanara's Relyenong Bangus (v5)
  *
  * Beat behaviour:
  *   - Active beat = large text bottom-left (clip-path reveal)
- *   - Past beats  = small italic chips stacked top-left, slide in from left
+ *   - Past beats  = small italic chips stacked top-right, slide in from right
  *   - On scroll UP, chips lose .visible and slide back out
- *   - Beat 0 (first beat) never becomes a chip — it only shows as active
- *     then fades away when beat 1 takes over, restoring on scroll up
+ *
+ * Outro:
+ *   - After last frame, the video stays frozen fullscreen
+ *   - Extra scroll budget drives the outro panel sliding UP from the bottom
+ *   - The page never visually scrolls away — viewport stays on the video
  */
 
 (() => {
   'use strict';
 
   /* ─── CONFIG ────────────────────────────────────────────────── */
-  const TOTAL_FRAMES = 220;
-  const PX_PER_FRAME = 36;
-  const LERP_FACTOR  = 0.12;
-  const FRAME_DIR    = 'relyeno frames';
-  const FRAME_PREFIX = 'ezgif-frame-';
-  const FRAME_EXT    = '.jpg';
-  const NATIVE_W     = 3840;
-  const NATIVE_H     = 2204;
-  const ASPECT       = NATIVE_W / NATIVE_H;
+  const TOTAL_FRAMES  = 220;
+  const PX_PER_FRAME  = 36;
+  const OUTRO_SCROLL  = 600;   // extra px of scroll budget for outro slide-up
+  const LERP_FACTOR   = 0.12;
+  const FRAME_DIR     = 'relyeno frames';
+  const FRAME_PREFIX  = 'ezgif-frame-';
+  const FRAME_EXT     = '.jpg';
+  const NATIVE_W      = 3840;
+  const NATIVE_H      = 2204;
+  const ASPECT        = NATIVE_W / NATIVE_H;
 
   const BEATS = [
     {
@@ -66,8 +70,8 @@
   const ctaBtn        = document.getElementById('cta-btn');
   const beatPanel     = document.getElementById('beat-panel');
   const pastBeatsArea = document.getElementById('past-beats-area');
-  const outroEl       = document.getElementById('outro');
   const stageFlash    = document.getElementById('stage-flash');
+  const outroPanel    = document.getElementById('outro-panel');
 
   /* ─── STATE ─────────────────────────────────────────────────── */
   const images     = new Array(TOTAL_FRAMES);
@@ -77,7 +81,7 @@
   let canvasCSSW   = 0;
   let canvasCSSH   = 0;
 
-  /* ─── BUILD BEAT LAYERS (bottom-left active panel) ──────────── */
+  /* ─── BUILD BEAT LAYERS ─────────────────────────────────────── */
   const layers = BEATS.map((beat) => {
     const layer = document.createElement('div');
     layer.className = 'beat-layer is-future';
@@ -110,12 +114,7 @@
     return layer;
   });
 
-  /* ─── BUILD PAST CHIPS (top-left area) ─────────────────────── */
-  /*
-    One chip per beat. All chips exist in DOM always.
-    JS toggles .visible based on whether beat index < activeBeat.
-    --i is the stagger index for enter transition-delay.
-  */
+  /* ─── BUILD PAST CHIPS ──────────────────────────────────────── */
   const chips = BEATS.map((beat, i) => {
     const chip = document.createElement('div');
     chip.className = 'past-chip';
@@ -141,10 +140,8 @@
 
   /* ─── SET PANEL MIN-HEIGHT ──────────────────────────────────── */
   function updatePanelHeight() {
-    // Measure each layer's natural height and set the panel tall enough
     let maxH = 0;
     layers.forEach(layer => {
-      // Briefly make it block-positioned so offsetHeight works
       const origPos = layer.style.position;
       layer.style.position = 'relative';
       const h = layer.offsetHeight;
@@ -161,7 +158,6 @@
     const prev = activeBeat;
     activeBeat = beatIndex;
 
-    // Update beat layers
     layers.forEach((layer, i) => {
       layer.classList.remove('is-active', 'is-past', 'is-future');
       if      (i < beatIndex)  layer.classList.add('is-past');
@@ -169,18 +165,11 @@
       else                      layer.classList.add('is-future');
     });
 
-    // Update chips:
-    // A chip is visible iff its beat index < activeBeat
-    // i.e. all beats that have ALREADY been passed are shown as chips
     chips.forEach((chip, i) => {
-      if (i < beatIndex) {
-        chip.classList.add('visible');
-      } else {
-        chip.classList.remove('visible');
-      }
+      if (i < beatIndex) chip.classList.add('visible');
+      else               chip.classList.remove('visible');
     });
 
-    // Subtle flash on beat change
     if (prev !== -1 && stageFlash) {
       stageFlash.classList.add('flash');
       requestAnimationFrame(() =>
@@ -250,6 +239,25 @@
     ctx.drawImage(img, 0, 0, canvasCSSW, canvasCSSH);
   }
 
+  /* ─── OUTRO SLIDE ───────────────────────────────────────────── */
+function updateOutro(outroProgress) {
+    if (outroProgress <= 0) {
+      outroPanel.style.transform = 'translateY(100vh)';
+      outroPanel.style.opacity   = '0';
+      canvas.style.transform     = 'translate(-50%, -50%) scale(1)';
+      canvas.style.opacity       = '1';
+    } else {
+      const translateY    = (1 - outroProgress) * 100;
+      const panelOpacity  = Math.min(1, outroProgress * 2);
+      const scale         = 1 - (outroProgress * 0.15);
+      const canvasOpacity = Math.max(0, 1 - outroProgress * 1.5); // fades out by ~67% progress
+      outroPanel.style.transform = `translateY(${translateY}vh)`;
+      outroPanel.style.opacity   = String(panelOpacity);
+      canvas.style.transform     = `translate(-50%, -50%) scale(${scale})`;
+      canvas.style.opacity       = String(canvasOpacity);
+    }
+  }
+
   /* ─── RAF LOOP ──────────────────────────────────────────────── */
   function tick() {
     const delta = targetFrame - currentFrame;
@@ -264,23 +272,40 @@
   }
 
   /* ─── SCROLL ────────────────────────────────────────────────── */
-  function onScroll() {
-    const scrollTop = window.scrollY || document.documentElement.scrollTop;
-    const maxScroll = Math.max(
-      spacer.scrollHeight - outroEl.offsetHeight - window.innerHeight, 1
-    );
-    const progress = Math.max(0, Math.min(1, scrollTop / maxScroll));
+function onScroll() {
+    const scrollTop      = window.scrollY || document.documentElement.scrollTop;
+    const maxScrollable  = document.body.scrollHeight - window.innerHeight;
+    const frameScrollMax = maxScrollable - OUTRO_SCROLL;
 
-    targetFrame = Math.min(Math.floor(progress * TOTAL_FRAMES), TOTAL_FRAMES - 1);
-    progressBar.style.width = (progress * 100) + '%';
+    // Frame progress
+    const frameProgress = Math.max(0, Math.min(1, scrollTop / frameScrollMax));
+    targetFrame = Math.min(Math.floor(frameProgress * TOTAL_FRAMES), TOTAL_FRAMES - 1);
+
+    // Outro progress
+    const outroRaw      = scrollTop - frameScrollMax;
+    const outroProgress = Math.max(0, Math.min(1, outroRaw / OUTRO_SCROLL));
+    updateOutro(outroProgress);
+
+    // Fade beat panel + chips
+    const beatOpacity = outroProgress > 0.1
+      ? Math.max(0, 1 - (outroProgress - 0.1) / 0.3)
+      : 1;
+    beatPanel.style.opacity     = String(beatOpacity);
+    pastBeatsArea.style.opacity = String(beatOpacity);
+
+    // Progress bar
+    const totalProgress = Math.max(0, Math.min(1, scrollTop / maxScrollable));
+    progressBar.style.width = (totalProgress * 100) + '%';
+
     if (scrollTop > 40) scrollHint.classList.add('hidden');
     else                scrollHint.classList.remove('hidden');
-    ctaBtn.classList.toggle('visible', progress > 0.06);
+
+    ctaBtn.classList.toggle('visible', frameProgress > 0.06);
   }
 
   /* ─── INIT ──────────────────────────────────────────────────── */
   async function init() {
-    spacer.style.height = (TOTAL_FRAMES * PX_PER_FRAME) + 'px';
+    spacer.style.height = (TOTAL_FRAMES * PX_PER_FRAME + OUTRO_SCROLL) + 'px';
 
     await preloadFrames();
     await new Promise(r => setTimeout(r, 250));
@@ -289,6 +314,7 @@
     resizeCanvas();
     drawFrame(0);
     updateText(0);
+    updateOutro(0);
 
     requestAnimationFrame(() => updatePanelHeight());
 
